@@ -1,0 +1,11 @@
+{
+  "font": "Cue Bitmap JP 16 (derived bitmap)",
+  "source": "Noto Sans CJK JP Regular",
+  "url": "https://github.com/notofonts/noto-cjk/tree/main/Sans",
+  "sha256": "68a3fc98800b2a27b371f2fb79991daf3633bd89309d4ffaa6946fd587f375b5",
+  "license": "SIL Open Font License 1.1",
+  "glyphs": 6976,
+  "pixels": 16,
+  "threshold": 96,
+  "baseline": 14
+}

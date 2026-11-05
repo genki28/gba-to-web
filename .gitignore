@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+gba/build/
+gba/logs/
+docs/*.jpg
+docs/test-results.txt

@@ -1,0 +1,4 @@
+Cue Bitmap JP 16 is derived from Noto Sans CJK JP Regular.
+© 2014-2021 Adobe (http://www.adobe.com/).
+SIL Open Font License 1.1; see FONT-OFL.txt. Source: https://github.com/notofonts/noto-cjk
+Glyph set is public and does not contain speaker notes.
