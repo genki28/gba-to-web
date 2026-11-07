@@ -1,6 +1,6 @@
 # ライセンスと出典
 
-独自コードの公開ライセンスは未決定です。全体にMIT等を付与していません。非公開リポジトリへの移行準備で、公開配布を実行したものではありません。公開配布時はGPL互換の配布条件、対応ソースの提供、ROMのブートヘッダーの扱いを所有者が確認してください。
+このリポジトリの独自コードは GNU General Public License v3.0 only（GPL-3.0-only）で公開します。全文は [LICENSE](LICENSE) です。GPL-3.0の上流送信器から派生したファイルを含むため、全体をGPL-3.0にそろえています。フォントとその生成物は下記のとおりSIL OFL 1.1、上流ファイルは各原本のライセンスに従います。ROMの起動ヘッダーはGBAで実行するために必要な形式で、任天堂や上流作者の公式作品ではありません。
 
 - 上流送信器: Wired-Ariel/gen3-poke-multiplayer v1.10.0、GPL-3.0。https://github.com/Wired-Ariel/gen3-poke-multiplayer/tree/v1.10.0 。上流mb_multi.py / usb_link.py / LICENSEを保持し、上流ファイルは改変していません。
 - Noto Sans CJK JP由来のCue Bitmap JP 16: SIL OFL 1.1。https://github.com/notofonts/noto-cjk 。OTF、生成条件、OFLはGBA側に保持。Web側には配布フォントのクレジットと対応ソースzipを同梱します。
