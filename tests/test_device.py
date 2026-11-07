@@ -7,7 +7,11 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+ROM = ROOT/'dist/hardware/parade_mb.gba'
+NEEDS_ROM = unittest.skipUnless(ROM.exists(), 'ROM未生成。make -C gba でビルドしてください（ROMはリポジトリに含めていません）')
+
 class DeviceTests(unittest.TestCase):
+    @NEEDS_ROM
     def test_check_never_imports_usb(self):
         code = '''import sys,runpy,importlib.abc
 class NoUSB(importlib.abc.MetaPathFinder):
@@ -22,6 +26,7 @@ runpy.run_path('gba/send.py',run_name='__main__')
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertIn('No USB access',result.stdout)
 
+    @NEEDS_ROM
     def test_manifest_rejects_modified_rom(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)

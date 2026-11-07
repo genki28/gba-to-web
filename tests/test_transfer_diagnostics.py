@@ -25,6 +25,7 @@ class MemoryDevice:
         return len(data)
 
 
+@unittest.skipUnless((ROOT/'dist/hardware/parade_mb.gba').exists(), 'ROM未生成。make -C gba でビルドしてください（ROMはリポジトリに含めていません）')
 class DiagnosticTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

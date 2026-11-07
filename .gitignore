@@ -8,3 +8,5 @@ gba/build/
 gba/logs/
 docs/*.jpg
 docs/test-results.txt
+# Built ROM: reproduce with `make -C gba` (sha256 in dist/hardware/rom-manifest.js)
+dist/hardware/parade_mb.gba

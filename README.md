@@ -13,6 +13,18 @@ GBAをWeb発表のコントローラーと日本語メモ画面にするRAM実�
 - [実機テストの時系列記録](docs/HARDWARE-RUN-2026-11-05.md): 2026-11-05からの観測・本人の報告。各記述はその時点の記録です。
 - [ライセンスと出典](LICENSES.md) / [本人用GitHub送信手順](docs/PUSH-STEPS.md)。
 
+## ROMのビルド（最初に必要）
+
+ROM本体（`dist/hardware/parade_mb.gba`）はリポジトリに含めていません。ソースから作ります。
+
+```sh
+make -C gba
+```
+
+GNU Arm Embedded の `arm-none-eabi-gcc` / `arm-none-eabi-objcopy` と make が必要です。2026-11-07に `8-2019-q3-update`（GCC 8.3.1）でビルドし、同梱の `dist/hardware/rom-manifest.js` と同じSHA-256（`e385c021…`）になることを確認しています。別のバージョンではバイト列が変わることがあり、そのときは `--check` がハッシュ不一致で止まります。
+
+GBAのBIOSが起動時に照合する決まったロゴのバイト列は `gba/package.py` がヘッダーへ書き込みます。これはGBAで実行するための形式で、デモの絵柄ではありません。任天堂や上流作者の公式作品ではありません。
+
 ## USBを使わない確認
 
 リポジトリ直下で実行します。Python 3とホスト側Cコンパイラーが必要です。
@@ -22,7 +34,7 @@ python3 -B -m unittest discover -s tests -p 'test_*.py' -v
 python3 -B gba/send.py --check
 ```
 
-テストはUSBを列挙せず、ROM、模擬USB、ホスト上の受信処理を検証します。Cテストは一時ファイルと `/tmp/parade-japanese.ppm` を生成・上書きします。USB用の仮想環境が準備済みなら、次で固定依存パッケージも確認できます。
+テストはUSBを列挙せず、ROM、模擬USB、ホスト上の受信処理を検証します。ROMをビルドしていない場合、ROMを使うテストは理由を表示して飛ばされます。Cテストは一時ファイルと `/tmp/parade-japanese.ppm` を生成・上書きします。USB用の仮想環境が準備済みなら、次で固定依存パッケージも確認できます。
 
 ```sh
 ./Send-ROM.command --check
