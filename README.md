@@ -1,69 +1,74 @@
-## Desktop作業版（2026-11-05 UTC）
-
-今後の作業先は `~/Desktop/gba-to-web`。Webは `~/Desktop/gba-to-web-slide` です。元フォルダは削除していません。既存のPython環境を引き継ぎ、`./Send-ROM.command --check` はUSBアクセスなしで成功しています。通信・ROM・転送器はコピー前と同一です。実機の接続に問題がないという本人の報告とは別に、今回の作業では転送・接続・機器操作をしていません。
-
-GitHub: https://github.com/genki28/gba-to-web （非公開）。GitHubへのpushは未実施です。
-
 # GBA Web Device
 
-GBAをWeb発表のコントローラーと日本語メモ画面にするRAM実行プログラム、および独立したPython転送ツールです。想定する非公開リポジトリ名は `genki28/gba-to-web`。Webの本文・Three.js演出は別の `gba-to-web-slide` が管理します。
+GBAをWeb発表のコントローラーと日本語メモ画面にするRAM実行プログラム、および独立したPython転送ツールです。Webの発表本文・Three.js演出・ブラウザー側の接続は、隣の `gba-to-web-slide` が管理します。
 
-## このフォルダーだけでビルド・検証
+作業先は `~/Desktop/gba-to-web`、Web側は `~/Desktop/gba-to-web-slide` です。
 
-必要: GNU Arm Embeddedの `arm-none-eabi-gcc` / `arm-none-eabi-objcopy`、make、Python 3。ホストテストにはCコンパイラーも使います。生成済みのフォントがあるため通常ビルドでPillowは不要です。
+## ドキュメント
+
+- [セットアップ・実機運用](docs/SETUP-AND-OPERATIONS.md): 必要機材、配線の確認範囲、USB環境、転送とWeb接続の順序、操作、障害時の確認。
+- [開発・検証](docs/DEVELOPMENT.md): ソース構成、ビルド、USBを使わないテスト、ROM・フォントの対応、Web側への受け渡し。
+- [アプリケーションプロトコルv2](docs/PROTOCOL.md): フレーム、CRC、描画ACK、heartbeatの仕様（英語）。
+- [独立転送の調査記録](docs/TRANSFER-RELIABILITY.md): 失敗段階、診断追加、次回確認の背景。
+- [実機テストの時系列記録](docs/HARDWARE-RUN-2026-11-05.md): 2026-11-05からの観測・本人の報告。各記述はその時点の記録です。
+- [ライセンスと出典](LICENSES.md) / [本人用GitHub送信手順](docs/PUSH-STEPS.md)。
+
+## ROMのビルド（最初に必要）
+
+ROM本体（`dist/hardware/parade_mb.gba`）はリポジトリに含めていません。ソースから作ります。
 
 ```sh
 make -C gba
+```
+
+GNU Arm Embedded の `arm-none-eabi-gcc` / `arm-none-eabi-objcopy` と make が必要です。2026-11-07に `8-2019-q3-update`（GCC 8.3.1）でビルドし、同梱の `dist/hardware/rom-manifest.js` と同じSHA-256（`e385c021…`）になることを確認しています。別のバージョンではバイト列が変わることがあり、そのときは `--check` がハッシュ不一致で止まります。
+
+GBAのBIOSが起動時に照合する決まったロゴのバイト列は `gba/package.py` がヘッダーへ書き込みます。これはGBAで実行するための形式で、デモの絵柄ではありません。任天堂や上流作者の公式作品ではありません。
+
+## USBを使わない確認
+
+リポジトリ直下で実行します。Python 3とホスト側Cコンパイラーが必要です。
+
+```sh
 python3 -B -m unittest discover -s tests -p 'test_*.py' -v
 python3 -B gba/send.py --check
 ```
 
-出力は `dist/hardware/parade_mb.gba` と `rom-manifest.js`。ヘッダー、サイズ、SHA-256を照合します。テストはUSBを列挙せず、ROMとホスト上の受信処理を検査します。`tests/wire-v2-fixtures.json` はWebのv2送信器で生成した固定フレームです。プロトコルを変える場合は両リポジトリとこのフィクスチャを更新してください。
-
-## 次回の実機テスト
-
-初回のローカル環境準備:
+テストはUSBを列挙せず、ROM、模擬USB、ホスト上の受信処理を検証します。ROMをビルドしていない場合、ROMを使うテストは理由を表示して飛ばされます。Cテストは一時ファイルと `/tmp/parade-japanese.ppm` を生成・上書きします。USB用の仮想環境が準備済みなら、次で固定依存パッケージも確認できます。
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-usb.txt
 ./Send-ROM.command --check
 ```
 
-`--check` は依存パッケージとROMだけを確認します。GBAの電源OFFでカートリッジを外し、前回の配線で電源を入れ起動ロゴを待つ。Webや他ツールがUSBを使用していない状態で、`Send-ROM.command` をダブルクリックするとRAMへ1回転送します。アダプターの書換え・再起動は行いません。
+**`Send-ROM.command` のダブルクリック、または `--check` なしの実行は実機転送を開始します。`gba/send.py` のオプションなし実行もUSB照会とCancel操作を含み、オフライン確認ではありません。**
 
-GBAに `WAITING FOR WEB` が出たら、Web側で `Start.command` → PC版Chrome / Edgeの `http://127.0.0.1:4186/` → 「GBA接続・メモ」→「起動済みのGBAに接続」→「GBLink USB」。接続応答と日本語表示を確認し、Aで次、Bで前を試します。GBAがすでに起動している場合は転送を省きます。
+## 実機での基本の流れ
 
-対象はGBA-PICO-LINK＋改変版Celio 2.0.6。転送は最大20分、1回のみ。`gba/send.py` のオプションなし実行はUSB照会を含むので、実機なしの確認には `--check` を使います。電源OFFでRAMプログラムは消えます。
+1. [セットアップ・実機運用](docs/SETUP-AND-OPERATIONS.md)を読み、対象機材・既存配線・USB環境を確認します。
+2. GBAがカートリッジなしの起動ロゴで待機し、Webや他ツールがUSBを使っていない状態で、`Send-ROM.command` を1回実行します。
+3. `DONE! CRC 0x....` と正常終了、GBA画面の `WAITING FOR WEB` を別々に確認します。
+4. Web側の `Start.command` → PC版Chrome / Edge → `http://127.0.0.1:4186/` →「GBA接続・メモ」→「起動済みのGBAに接続」→「GBLink USB」。
+5. GBA応答・日本語メモ・描画完了の表示を確認し、A / 右 / Rで次、B / 左 / Lで前へ進みます。
 
-現状: 本人がWAITING FOR WEBを確認済み。今回の接続順序修正・日本語メモ・描画ACK・ボタン遷移の実機確認は未完了です。日本語ROMは240032 bytesで、過去の1776-byte英字ROMの数秒という転送時間をそのまま当てはめられません。
+すでに `WAITING FOR WEB` が出ている場合は再転送せず、Web接続へ進みます。GBAの電源を切るとRAM上のプログラムは消えます。ファームウェア書き換えやアダプター再起動はこの手順に含みません。
 
-## Web側へ成果物を渡す
+## 確認済みの範囲と未確認事項
 
-2つのチェックアウトを隣に置いた例:
+現行ソースと2026-11-06までの記録を基準に整理しています。これは実機動作を保証する文書ではありません。
 
-```sh
-make -C gba
-python3 tools/export_web.py ../gba-to-web-slide
-cd ../gba-to-web-slide
-python3 tools/package_source.py
-npm test
-```
+- 同梱日本語ROMは240032 bytes。過去に本人が `WAITING FOR WEB` を確認しましたが、その試行の最終CRC一致の記録はありません。
+- 独立Python転送は約10%で停止した記録と、その後2026-11-06 06:26 JSTに長さ応答 `0x0000` で停止した記録があります。原因は未確定で、最新の診断追加後の実機完走は未確認です。
+- 現行版のWeb接続、日本語メモ、描画ACK、GBAボタン遷移を通した実機確認は未完了です。
+- 通常タイミング3700、初期化待機70ms、試行1回、アダプター再起動なしを維持しています。1000ms待機は実機で失敗したため撤回済みです。約5分という転送時間は推定で、完走の実測値ではありません。
 
-ROM・マニフェスト・文字対応表・フォントのクレジット・対応ソースzipを一緒に渡します。`device-export.json` にハッシュを記録します。Web側でROMや文字対応表だけを独自編集しないでください。
+## 開発とWeb側への受け渡し
 
-フォント再生成だけはPillowが必要です。`python3 gba/tools/build_font.py` は `font_jp.h` と `dist/hardware/font-coverage.js` を一緒に生成します。生成環境で描画が変わる可能性があるため、その後ROMを再ビルド・再検証します。
+通常ビルドは `make -C gba`。GNU Arm Embeddedの `arm-none-eabi-gcc` / `arm-none-eabi-objcopy`、make、Python 3を使います。生成済みフォントがあるため、通常ビルドにPillowは不要です。
 
-## ライセンスと秘密情報
+ROM、マニフェスト、文字対応表、フォントのクレジット、対応ソースzipをまとめてWeb側へ渡します。手順とファイル更新範囲は[開発・検証](docs/DEVELOPMENT.md)を参照してください。文書を読むだけのときや文書だけを編集したときに、ROMやソースzipを再生成する必要はありません。
 
-[LICENSES.md](LICENSES.md) と各原本を保持。上流Python送信器はGPL-3.0、フォントはSIL OFL 1.1。独自コードの公開ライセンスは未決定で、プロジェクト全体をMITとは宣言していません。これは非公開リポジトリ用の準備であり、公開配布時のGPL互換条件・ROMヘッダーの扱いは所有者が決める必要があります。
+## リポジトリと取り扱い
 
-`.venv`、build、logs、`.env`、個人用の発表メモをコミットしません。アダプターのファームウェアや認証情報、過去の権利不明画像は含めていません。GitHubの操作はまだ行っていません。
+ローカルの `origin` 設定先は https://github.com/genki28/gba-to-web です。URLやローカル追跡ブランチだけでは、現在のGitHub公開範囲や未送信差分を判断できません。履歴文書の「push未実施」「非公開」は作成時点の記録であり、現在状態の保証ではありません。
 
-### 独立転送の現在の対策
-
-初期化待機は従来の70msです。1000msへの延長は実機のヘッダー段階で失敗したため撤回しました。代わりにprepared_sender.pyでCRC・アドレス計算をraw USB開始前へ移し、通信中の計算を約155msから約9msに短縮しました。暗号化とCRCは上流と一致します。
-
-この版で本人が実行した転送は初期化を通過し約10%まで進みましたが、データ受信が3秒途絶えて停止しました。原因は未確定です。現在はデータ受信と状態受信を別スレッドへ分離し、USBエラーを隠さず停止して診断情報を保存します。転送の進捗は終了前から表示します。通常転送タイミング3700、1回のみ、自動再試行なしを維持しています。変更後の実機再試行は未実施です。詳細と次回手順は [転送の調査記録](docs/TRANSFER-RELIABILITY.md) を参照してください。
-
-`python3 -B -m unittest discover -s tests -p 'test_*.py' -v` でPythonテストを実行できます。USBにはアクセスしません。
+`.venv`、build、logs、`.env`、個人用の発表メモをコミットしません。独自コードは GPL-3.0-only です（[LICENSE](LICENSE)）。上流Python送信器はGPL-3.0、フォントはSIL OFL 1.1です。詳細は[ライセンスと出典](LICENSES.md)を参照してください。

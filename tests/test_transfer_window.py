@@ -8,6 +8,7 @@ from send import transfer_command
 from prepared_sender import prepare_transfer,encode_prepared,PreparedMultiboot,upstream
 from diagnostic_usb import ObservedDevice
 
+@unittest.skipUnless((ROOT/'dist/hardware/parade_mb.gba').exists(), 'ROM未生成。make -C gba でビルドしてください（ROMはリポジトリに含めていません）')
 class PreparedTransferTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
